@@ -1,5 +1,10 @@
 package lazer
 
+var DefaultLogger = &Logger{
+	IsLazy:   true,
+	Filepath: DefaultPath,
+}
+
 type Logger struct {
 	IsLazy   bool
 	Filepath string
@@ -13,7 +18,7 @@ func NewLogger(isLazy bool, filepath string) *Logger {
 }
 
 func Default() *Logger {
-	return NewLogger(true, DefaultPath)
+	return DefaultLogger
 }
 
 func (l *Logger) Info(msg string) {
