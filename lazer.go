@@ -1,25 +1,37 @@
 package lazer
 
-var DefaultLogger = &Logger{
-	IsLazy:   true,
-	Filepath: DefaultPath,
-}
+import (
+	"io"
+	"os"
+)
 
+var DefaultLogger = NewLogger(true, os.Stderr)
+
+// Logger is a struct of Lazer.
 type Logger struct {
-	IsLazy   bool
-	Filepath string
+	// Lazy is the flag of logger to define sync or async.
+	Lazy bool
+	// W is the Writer of logger, the default value is os.Stderr.
+	W  io.Writer
+	Ch chan string
 }
 
-func NewLogger(isLazy bool, filepath string) *Logger {
+func NewLogger(Lazy bool, writer io.Writer) *Logger {
 	return &Logger{
-		IsLazy:   isLazy,
-		Filepath: filepath,
+		Lazy: Lazy,
+		W:    writer,
+		Ch:   make(chan string),
 	}
 }
 
 func Default() *Logger {
 	return DefaultLogger
 }
+
+// func (l *Logger) out(msg string) {
+// 	var buf []byte
+// 	l.W.Write(msg)
+// }
 
 func (l *Logger) Info(msg string) {
 
