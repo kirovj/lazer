@@ -11,10 +11,8 @@ type Flush func(msg string)
 
 // Logger is a struct of Lazer.
 type Logger struct {
-	// Lazy is the flag of logger to define sync or async.
-	Lazy bool
 	// W is the Writer of logger, the default value is os.Stderr.
-	W io.Writer
+	Writer io.Writer
 	// Ch is the channel to save log
 	Ch    chan string
 	ChLen int
@@ -23,10 +21,14 @@ type Logger struct {
 	FlushFunc Flush
 }
 
-func NewLogger(Lazy bool, writer io.Writer, chLen int, flushTime int64, flushFunc Flush) *Logger {
+type Msg struct {
+	Level
+	Content string
+}
+
+func NewLogger(writer io.Writer, chLen int, flushTime int64, flushFunc Flush) *Logger {
 	l := &Logger{
-		Lazy:      Lazy,
-		W:         writer,
+		Writer:    writer,
 		Ch:        make(chan string, chLen),
 		ChLen:     chLen,
 		FlushTime: time.Duration(flushTime),
@@ -42,17 +44,9 @@ var once sync.Once
 // Default to make a singleton instance of Logger
 func Default() *Logger {
 	once.Do(func() {
-		DefaultLogger = &Logger{
-			Lazy:      true,
-			W:         os.Stderr,
-			Ch:        make(chan string, 10),
-			ChLen:     100,
-			FlushTime: 2,
-		}
-		DefaultLogger.FlushFunc = func(msg string) {
-			_, _ = DefaultLogger.W.Write([]byte(msg))
-		}
-		go StartFlush(DefaultLogger)
+		DefaultLogger = NewLogger(os.Stderr, 100, 2, func(msg string) {
+			_, _ = os.Stderr.Write([]byte(msg))
+		})
 	})
 	return DefaultLogger
 }
