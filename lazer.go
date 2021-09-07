@@ -4,16 +4,14 @@ import (
 	"io"
 	"os"
 	"sync"
-	"time"
 )
 
 // Logger is a struct of Lazer.
 type Logger struct {
-	// W is the Writer of logger, the default value is os.Stderr.
+	// Writer is the Writer of logger, the default value is os.Stderr.
 	Writer io.Writer
-	// Ch is the channel to save log
-	Pipline chan *Msg
-	Pool    sync.Pool
+	// Pipe is the pipeline to transfer Msg
+	Pipe *Pipe
 }
 
 // Msg is the target to log.
@@ -25,8 +23,8 @@ type Msg struct {
 
 func NewLogger(writer io.Writer) *Logger {
 	logger := &Logger{
-		Writer:  writer,
-		Pipline: make(chan *Msg),
+		Writer: writer,
+		Pipe:   DefaultPipe(),
 	}
 	go pull(logger)
 	return logger
@@ -44,16 +42,17 @@ func Default() *Logger {
 }
 
 func push(logger *Logger, level Level, msg string) {
-	m := &Msg{
-		Level:   level,
-		Content: []byte(msg),
-		Time:    time.Now().Unix(),
-	}
-	select {
-	case logger.Pipline <- m:
-		return
-	default:
-	}
+	//m := &Msg{
+	//	Level:   level,
+	//	Content: []byte(msg),
+	//	Time:    time.Now().Unix(),
+	//}
+
+	//select {
+	//case logger.Pipline <- m:
+	//	return
+	//default:
+	//}
 }
 
 func pull(logger *Logger) {
