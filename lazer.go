@@ -7,35 +7,29 @@ import (
 	"time"
 )
 
-type Flush func(msg string)
-
 // Logger is a struct of Lazer.
 type Logger struct {
 	// W is the Writer of logger, the default value is os.Stderr.
 	Writer io.Writer
 	// Ch is the channel to save log
-	Ch    chan string
-	ChLen int
-	// FlushTime the time between flush
-	FlushTime time.Duration
-	FlushFunc Flush
+	Pipline chan *Msg
+	Pool    sync.Pool
 }
 
+// Msg is the target to log.
 type Msg struct {
 	Level
-	Content string
+	Content []byte
+	Time    int64
 }
 
-func NewLogger(writer io.Writer, chLen int, flushTime int64, flushFunc Flush) *Logger {
-	l := &Logger{
-		Writer:    writer,
-		Ch:        make(chan string, chLen),
-		ChLen:     chLen,
-		FlushTime: time.Duration(flushTime),
-		FlushFunc: flushFunc,
+func NewLogger(writer io.Writer) *Logger {
+	logger := &Logger{
+		Writer:  writer,
+		Pipline: make(chan *Msg),
 	}
-	go StartFlush(l)
-	return l
+	go pull(logger)
+	return logger
 }
 
 var DefaultLogger *Logger
@@ -44,30 +38,30 @@ var once sync.Once
 // Default to make a singleton instance of Logger
 func Default() *Logger {
 	once.Do(func() {
-		DefaultLogger = NewLogger(os.Stderr, 100, 2, func(msg string) {
-			_, _ = os.Stderr.Write([]byte(msg))
-		})
+		DefaultLogger = NewLogger(os.Stderr)
 	})
 	return DefaultLogger
 }
 
-// join makes one log with level, time, msg
-func join(level, msg string) string {
-	return "[" + level + "] " + msg + "\n"
-}
-
-func push(l *Logger, level, msg string) {
-	s := join(level, msg)
+func push(logger *Logger, level Level, msg string) {
+	m := &Msg{
+		Level:   level,
+		Content: []byte(msg),
+		Time:    time.Now().Unix(),
+	}
 	select {
-	case l.Ch <- s:
+	case logger.Pipline <- m:
 		return
 	default:
-		l.FlushFunc(s)
 	}
 }
 
+func pull(logger *Logger) {
+
+}
+
 func (l *Logger) out(msg string) {
-	_, _ = l.W.Write([]byte(msg))
+	_, _ = l.Writer.Write([]byte(msg))
 }
 
 func (l *Logger) Info(msg string) {
@@ -88,15 +82,4 @@ func (l *Logger) Debug(msg string) {
 
 func (l *Logger) Error(msg string) {
 	go push(l, ERROR, msg)
-}
-
-func StartFlush(l *Logger) {
-	for {
-		select {
-		case msg := <-l.Ch:
-			l.FlushFunc(msg)
-		default:
-			time.Sleep(l.FlushTime * time.Second)
-		}
-	}
 }
