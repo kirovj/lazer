@@ -1,7 +1,6 @@
 package lazer
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -95,7 +94,6 @@ pull:
 					if err := l.Writer.Close(); err != nil {
 						panic("Lazer writer close error: " + err.Error())
 					}
-					fmt.Println("pipe empty, sleep {} s", l.Wait)
 					break write
 				}
 			}
