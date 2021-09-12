@@ -1,6 +1,6 @@
 package lazer
 
-// State msg type
+// Level is to define the type of log
 type Level uint8
 
 const (
@@ -12,5 +12,6 @@ const (
 )
 
 const (
-	DefaultPath = "logs"
+	DefaultPath     = "logs"
+	DefaultPipeSize = 3
 )

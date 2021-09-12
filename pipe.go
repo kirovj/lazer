@@ -5,7 +5,7 @@ import (
 )
 
 // T defines interface{}, and will be used for generic type after go 1.18 is released.
-type T interface{}
+type T []byte
 
 // Pipe is an infinite chan.
 // In is used to write without blocking, which supports multiple writers.

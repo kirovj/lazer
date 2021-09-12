@@ -17,19 +17,19 @@ type Ring struct {
 	w           int // write pointer
 }
 
-func NewRingBuffer(initialSize int) *Ring {
-	if initialSize <= 0 {
+func NewRingBuffer(initSize int) *Ring {
+	if initSize <= 0 {
 		panic("initial size must be great than zero")
 	}
 	// initial size must >= 2
-	if initialSize == 1 {
-		initialSize = 2
+	if initSize == 1 {
+		initSize = 2
 	}
 
 	return &Ring{
-		buf:         make([]T, initialSize),
-		initialSize: initialSize,
-		size:        initialSize,
+		buf:         make([]T, initSize),
+		initialSize: initSize,
+		size:        initSize,
 	}
 }
 
