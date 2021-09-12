@@ -1,11 +1,10 @@
 package lazer
 
-import "errors"
+import (
+	"errors"
+)
 
 var EmptyErr = errors.New("ring is empty")
-
-type T interface {
-}
 
 // Ring is a ring buffer for common types.
 // It is never full and always grows if it will be full.
@@ -18,7 +17,7 @@ type Ring struct {
 	w           int // write pointer
 }
 
-func NewRing(initialSize int) *Ring {
+func NewRingBuffer(initialSize int) *Ring {
 	if initialSize <= 0 {
 		panic("initial size must be great than zero")
 	}
