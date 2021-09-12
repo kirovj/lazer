@@ -1,16 +1,15 @@
 package lazer
 
 import (
-	"io"
-	"os"
+	"fmt"
 	"sync"
 	"time"
 )
 
 // Logger is a struct of Lazer.
 type Logger struct {
-	// Writer is the Writer of logger, the default value is os.Stderr.
-	Writer io.Writer
+	// Writer is the Writer of logger, the default value is os.File.
+	Writer Writer
 	// Pipe is the pipeline to transfer Msg
 	Pipe *Pipe
 	// Wait is the wait second between pulls
@@ -24,10 +23,18 @@ type Msg struct {
 	Time    int64
 }
 
-func NewLogger(writer io.Writer, pipeSize int) *Logger {
+// Writer is the interface of the output of log
+type Writer interface {
+	Ready() bool
+	Write([]byte) error
+	Close() error
+}
+
+func NewLogger(writer Writer, pipeSize, wait int) *Logger {
 	logger := &Logger{
 		Writer: writer,
 		Pipe:   NewPipe(pipeSize),
+		Wait:   wait,
 	}
 	go pull(logger)
 	return logger
@@ -39,7 +46,7 @@ var once sync.Once
 // Default to make a singleton instance of Logger
 func Default() *Logger {
 	once.Do(func() {
-		DefaultLogger = NewLogger(os.Stderr, DefaultPipeSize)
+		DefaultLogger = NewLogger(NewFileWriter("lazer.log"), DefaultPipeSize, DefaultWaitSec)
 	})
 	return DefaultLogger
 }
@@ -67,25 +74,34 @@ func format(m Msg) []byte {
 	case DEBUG:
 		level = "DEBUG"
 	}
-
 	return []byte("[" + level + "]: " + m.Content + "\n")
 }
 
+// pull is to get the msg from Pipe and out it
+// to pref
 func pull(l *Logger) {
+pull:
 	for {
-		select {
-		case msg := <-l.Pipe.Out:
-			if _, err := l.Writer.Write(msg); err != nil {
-				_, _ = os.Stderr.Write([]byte("Write log error!"))
+		if l.Writer.Ready() {
+		write:
+			for {
+				select {
+				case msg := <-l.Pipe.Out:
+					if err := l.Writer.Write(msg); err != nil {
+						close(l.Pipe.In)
+						break pull
+					}
+				default:
+					if err := l.Writer.Close(); err != nil {
+						panic("Lazer writer close error: " + err.Error())
+					}
+					fmt.Println("pipe empty, sleep {} s", l.Wait)
+					break write
+				}
 			}
-		default:
-			time.Sleep(time.Second * time.Duration(l.Wait))
 		}
+		time.Sleep(time.Second * time.Duration(l.Wait))
 	}
-}
-
-func (l *Logger) out(msg string) {
-	_, _ = l.Writer.Write([]byte(msg))
 }
 
 func (l *Logger) Info(msg string) {

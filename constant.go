@@ -12,6 +12,6 @@ const (
 )
 
 const (
-	DefaultPath     = "logs"
-	DefaultPipeSize = 3
+	DefaultPipeSize = 30
+	DefaultWaitSec  = 3
 )
