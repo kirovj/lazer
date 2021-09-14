@@ -12,12 +12,10 @@
 ```go
 package main
 
-import (
-	"github.com/kirovj/lazer"
-)
+import "github.com/kirovj/lazer"
 
 func main() {
-	log := lazer.Default()
+    log := lazer.Default()
     for i := 0; i < 100; i++ {
         log.Info("one  " + strconv.Itoa(i))
     }
@@ -28,3 +26,10 @@ func main() {
     }
 }
 ```
+
+## Todo
+* Time Struct
+* Xid: a id to trace msg
+* Msg Format
+* Pretty Console Writer  
+...
