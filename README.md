@@ -5,6 +5,7 @@
 ## Features
 
 * Dependency Free
+* Use [chanx](https://github.com/smallnest/chanx)
 * Only Lazy & Async
 * Simple Interface
 
